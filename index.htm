@@ -1,0 +1,293 @@
+<html>
+<head>
+<title>
+Bar API
+</title>
+
+<style>
+input[type=range] {
+    /*removes default webkit styles*/
+    -webkit-appearance: none;
+    
+    /*fix for FF unable to apply focus style bug */
+    border: 1px solid white;
+    
+    /*required for proper track sizing in FF*/
+    width: 300px;
+}
+input[type=range]::-webkit-slider-runnable-track {
+    width: 300px;
+    height: 5px;
+    background: #ddd;
+    border: none;
+    border-radius: 3px;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    border: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: goldenrod;
+    margin-top: -4px;
+}
+input[type=range]:focus {
+    outline: none;
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+    background: #ccc;
+}
+
+input[type=range]::-moz-range-track {
+    width: 300px;
+    height: 5px;
+    background: #ddd;
+    border: none;
+    border-radius: 3px;
+}
+input[type=range]::-moz-range-thumb {
+    border: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: goldenrod;
+}
+
+/*hide the outline behind the border*/
+input[type=range]:-moz-focusring{
+    outline: 1px solid white;
+    outline-offset: -1px;
+}
+
+input[type=range]::-ms-track {
+    width: 300px;
+    height: 5px;
+    
+    /*remove bg colour from the track, we'll use ms-fill-lower and ms-fill-upper instead */
+    background: transparent;
+    
+    /*leave room for the larger thumb to overflow with a transparent border */
+    border-color: transparent;
+    border-width: 6px 0;
+
+    /*remove default tick marks*/
+    color: transparent;
+}
+input[type=range]::-ms-fill-lower {
+    background: #777;
+    border-radius: 10px;
+}
+input[type=range]::-ms-fill-upper {
+    background: #ddd;
+    border-radius: 10px;
+}
+input[type=range]::-ms-thumb {
+    border: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: goldenrod;
+}
+input[type=range]:focus::-ms-fill-lower {
+    background: #888;
+}
+input[type=range]:focus::-ms-fill-upper {
+    background: #ccc;
+}
+</style>
+<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script>
+//random color generator
+randomColor = (function () {
+            var golden_ratio_conjugate = 0.618033988749895;
+            var h = Math.random();
+
+            var hslToRgb = function (h, s, l) {
+                var r, g, b;
+
+                if (s == 0) {
+                    r = g = b = l; // achromatic
+                } else {
+                    function hue2rgb(p, q, t) {
+                        if (t < 0) t += 1;
+                        if (t > 1) t -= 1;
+                        if (t < 1 / 6) return p + (q - p) * 6 * t;
+                        if (t < 1 / 2) return q;
+                        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                        return p;
+                    }
+
+                    var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    var p = 2 * l - q;
+                    r = hue2rgb(p, q, h + 1 / 3);
+                    g = hue2rgb(p, q, h);
+                    b = hue2rgb(p, q, h - 1 / 3);
+                }
+
+                return '#' + Math.round(r * 255).toString(16) + Math.round(g * 255).toString(16) + Math.round(b * 255).toString(16);
+            };
+
+            return function () {
+                h += golden_ratio_conjugate;
+                h %= 1;
+                return hslToRgb(h, Math.random() * 0.1 + 0.40, Math.random() * 0.1 + 0.4);
+            };
+        })();
+
+// main Bar API 
+function drawBar(x,y,height,width,depth,theta,color,delay){
+	if(theta>90){
+		theta=45;
+	}
+	
+	var h = y-height;
+	theta = Math.PI*theta/180;
+	var front_frame = document.createElementNS("http://www.w3.org/2000/svg","path"); 
+	front_frame.setAttributeNS(null, "d", "M "+x+","+y+" H "+ (x+width)+" V " + (h) + " H " + x +" Z");
+	front_frame.setAttributeNS(null,"fill","transparent");
+	front_frame.setAttributeNS(null,"stroke",color);
+	front_frame.setAttributeNS(null,"class","front");
+	
+	var side_frame = document.createElementNS("http://www.w3.org/2000/svg","path"); 
+	side_frame.setAttributeNS(null, "d", "M "+(x+width)+","+y+" L"+ (x+width+depth*Math.cos(theta))+" " + (y-depth*Math.sin(theta)) +" V " + (h-depth*Math.sin(theta))+" L"+(x+width)+" "+(h)+" Z");
+	side_frame.setAttributeNS(null,"fill","transparent");
+	side_frame.setAttributeNS(null,"stroke",color);
+	side_frame.setAttributeNS(null,"class","side");
+	
+	var top_frame = document.createElementNS("http://www.w3.org/2000/svg","path"); 
+	top_frame.setAttributeNS(null, "d", "M "+x+","+(h)+" H " + (x+width) + " L" + (x+width+depth*Math.cos(theta))+" " + (h-depth*Math.sin(theta)) + " H" + (x+depth*Math.cos(theta))+" Z");
+	top_frame.setAttributeNS(null,"fill","transparent");
+	top_frame.setAttributeNS(null,"stroke",color);
+	top_frame.setAttributeNS(null,"class","top");
+	
+	var front = document.createElementNS("http://www.w3.org/2000/svg","path"); 
+	front.setAttributeNS(null, "d", "M "+x+","+y+" H "+ (x+width)+" V " + (y) + " H " + x +" Z");
+	front.setAttributeNS(null,"fill",color);
+	front.setAttributeNS(null,"fill-opacity","0.7");
+	front.setAttributeNS(null,"class","front");
+	
+	d3.select(front).transition()
+	.duration(height*5).delay(delay).ease("bounce")
+	.attr('d',"M "+x+","+y+" H "+ (x+width)+" V " + (h-h/20) + " H " + x +" Z")
+	.transition().duration(height).delay(delay+height*4).ease("back")
+	.attr('d',"M "+x+","+y+" H "+ (x+width)+" V " + (h) + " H " + x +" Z");;
+	
+	var side = document.createElementNS("http://www.w3.org/2000/svg","path"); 
+	side.setAttributeNS(null, "d", "M "+(x+width)+","+y+" L"+ (x+width+depth*Math.cos(theta))+" " + (y-depth*Math.sin(theta)) +" V " + (y-depth*Math.sin(theta))+" L"+(x+width)+" "+(y)+" Z");
+	side.setAttributeNS(null,"fill",color);
+	side.setAttributeNS(null,"fill-opacity","0.8");
+	side.setAttributeNS(null,"class","side");
+	
+	d3.select(side).transition()
+	.duration(height*5).delay(delay).ease("bounce")
+	.attr('d',"M "+(x+width)+","+y+" L"+ (x+width+depth*Math.cos(theta))+" " + (y-depth*Math.sin(theta)) +" V " + (h-h/20-depth*Math.sin(theta))+" L"+(x+width)+" "+(h-h/20)+" Z")
+	.transition().duration(height).delay(delay+height*4).ease("back")
+	.attr('d',"M "+(x+width)+","+y+" L"+ (x+width+depth*Math.cos(theta))+" " + (y-depth*Math.sin(theta)) +" V " + (h-depth*Math.sin(theta))+" L"+(x+width)+" "+(h)+" Z");
+	
+	
+	var top = document.createElementNS("http://www.w3.org/2000/svg","path"); 
+	top.setAttributeNS(null, "d", "M "+x+","+(y)+" H " + (x+width) + " L" + (x+width+depth*Math.cos(theta))+" " + (y-depth*Math.sin(theta)) + " H" + (x+depth*Math.cos(theta))+" Z");
+	top.setAttributeNS(null,"fill",color);
+	top.setAttributeNS(null,"class","top");
+	
+	d3.select(top).transition()
+	.duration(height*5).delay(delay).ease("bounce")
+	.attr('d',"M "+x+","+(h-h/20)+" H " + (x+width) + " L" + (x+width+depth*Math.cos(theta))+" " + (h-h/20-depth*Math.sin(theta)) + " H" + (x+depth*Math.cos(theta))+" Z")
+	.transition().duration(height).delay(delay+height*4).ease("back")
+	.attr('d',"M "+x+","+(h)+" H " + (x+width) + " L" + (x+width+depth*Math.cos(theta))+" " + (h-depth*Math.sin(theta)) + " H" + (x+depth*Math.cos(theta))+" Z");
+	
+	
+	var bar = document.createElementNS("http://www.w3.org/2000/svg","g");
+	
+	bar.appendChild(front);
+	bar.appendChild(side);
+	bar.appendChild(top);
+	bar.appendChild(front_frame);
+	bar.appendChild(side_frame);
+	bar.appendChild(top_frame);
+	
+	bar.onmouseover = function(){
+		front.setAttributeNS(null,"fill-opacity","0.5");
+		side.setAttributeNS(null,"fill-opacity","0.6");
+		top.setAttributeNS(null,"fill-opacity","0.8");
+		
+		var col = '#'+(parseInt("0xffffff") ^ parseInt(color.replace("#","0X"), 16)).toString(16);
+		
+		front_frame.setAttributeNS(null,"stroke",col);
+		side_frame.setAttributeNS(null,"stroke",col);
+		top_frame.setAttributeNS(null,"stroke",col);
+	}
+	
+	bar.onmouseout = function(){
+		front.setAttributeNS(null,"fill-opacity","0.7");
+		side.setAttributeNS(null,"fill-opacity","0.8");
+		top.setAttributeNS(null,"fill-opacity","1");
+		
+		front_frame.setAttributeNS(null,"stroke",color);
+		side_frame.setAttributeNS(null,"stroke",color);
+		top_frame.setAttributeNS(null,"stroke",color);
+	}
+	return bar;
+}
+
+function loadCharts(){
+	//drawbar() return an svg path element which can be appended to an svg element;
+	//Syntax is: drawBar(x co-ordinate,y co-ordinate,height,width,depth,angle,color,animation-delay)
+
+	var color = [];
+	var height = [];
+	
+	
+	// generate random graphs
+	for(i=0;i<10;i++){
+		color.push(randomColor());
+		height.push(400*Math.random()+100);
+		document.getElementById("canvas").appendChild(drawBar(20+i*(60),600,height[i],parseFloat(document.getElementById("width").value),parseFloat(document.getElementById("depth").value),parseFloat(document.getElementById("angle").value),color[i],i*100));	
+	}
+	
+	
+	
+	
+	// Adding Event listeners to the Range Control, commment/remove the below code in actual implementation
+	document.getElementById("width").addEventListener("input", function() {
+			document.getElementById("canvas").innerHTML = "";
+			
+			for(i=0;i<10;i++){
+				document.getElementById("canvas").appendChild(drawBar(20+i*(60),600,height[i],parseFloat(document.getElementById("width").value),parseFloat(document.getElementById("depth").value),parseFloat(document.getElementById("angle").value),color[i],0));	
+			}
+	});
+	
+	document.getElementById("depth").addEventListener("input", function() {
+			document.getElementById("canvas").innerHTML = "";
+			
+			for(i=0;i<10;i++){
+				document.getElementById("canvas").appendChild(drawBar(20+i*(60),600,height[i],parseFloat(document.getElementById("width").value),parseFloat(document.getElementById("depth").value),parseFloat(document.getElementById("angle").value),color[i],0));	
+			}
+	});
+	
+	document.getElementById("angle").addEventListener("input", function() {
+			document.getElementById("canvas").innerHTML = "";
+			
+			for(i=0;i<10;i++){
+				document.getElementById("canvas").appendChild(drawBar(20+i*(60),600,height[i],parseFloat(document.getElementById("width").value),parseFloat(document.getElementById("depth").value),parseFloat(document.getElementById("angle").value),color[i],0));	
+			}
+	});
+	
+}
+
+
+</script>
+</head>
+<body onload="loadCharts()">
+<center>
+	<table>
+	<tr><td>Width</td><td><input type="range" name="width" id="width" value = "40" min="10" max="50"></td></tr><tr>
+	<tr><td>Depth</td><td><input type="range" name="depth" id="depth" value = "20" min="10" max="30"></td></tr><tr>
+	<tr><td>Angle</td><td><input type="range" name="angle" id="angle" value = "60" min="30" max="60"></td></tr><tr>
+</center>
+<br>
+<br>
+<svg height=600 width=800 id="canvas">
+</svg>
+</body>
+</html>
