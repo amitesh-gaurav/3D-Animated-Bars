@@ -249,7 +249,7 @@ function loadCharts(){
 	
 	
 	// Adding Event listeners to the Range Control, commment/remove the below code in actual implementation
-	document.getElementById("width").addEventListener("input", function() {
+	document.getElementById("width").addEventListener("change", function() {
 			document.getElementById("canvas").innerHTML = "";
 			
 			for(i=0;i<10;i++){
@@ -257,7 +257,7 @@ function loadCharts(){
 			}
 	});
 	
-	document.getElementById("depth").addEventListener("input", function() {
+	document.getElementById("depth").addEventListener("change", function() {
 			document.getElementById("canvas").innerHTML = "";
 			
 			for(i=0;i<10;i++){
@@ -265,7 +265,7 @@ function loadCharts(){
 			}
 	});
 	
-	document.getElementById("angle").addEventListener("input", function() {
+	document.getElementById("angle").addEventListener("change", function() {
 			document.getElementById("canvas").innerHTML = "";
 			
 			for(i=0;i<10;i++){
